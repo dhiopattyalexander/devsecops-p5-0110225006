@@ -7,3 +7,4 @@ __pycache__/
 # Local academic report drafts & scripts
 *.docx
 generate_report.py
+screenshots/
