@@ -1,0 +1,71 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build & Unit Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Execute Unit Tests
+        run: |
+          pytest -v tests/
+
+  sast-scan:
+    name: SAST Security Scan & Quality Gate
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies & SAST Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Bandit SAST Scanner
+        run: |
+          mkdir -p reports
+          # Run Bandit scan on source directory, output JSON and TXT format
+          bandit -r src/ -f json -o reports/bandit-report.json || true
+          bandit -r src/ -f txt -o reports/bandit-report.txt || true
+          echo "=== BANDIT SCAN SUMMARY OUTPUT ==="
+          cat reports/bandit-report.txt
+
+      - name: Enforce DevSecOps Quality Gate
+        run: |
+          python scripts/quality_gate.py reports/bandit-report.json
+
+      - name: Upload Security Reports Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sast-bandit-security-report
+          path: reports/
