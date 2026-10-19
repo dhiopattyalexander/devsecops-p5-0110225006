@@ -6,7 +6,5 @@ __pycache__/
 
 # Local academic report drafts & scripts
 *.docx
-*.pdf
 generate_report.py
-convert_to_pdf.ps1
 screenshots/
