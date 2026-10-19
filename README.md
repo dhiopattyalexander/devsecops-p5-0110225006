@@ -7,7 +7,7 @@
 
 Proyek ini dibangun untuk memenuhi penugasan praktikum **DevSecOps Praktik 5** dengan fokus pada integrasi berkesinambungan (*Continuous Integration*), analisis keamanan statis (*Static Application Security Testing* / SAST), dan penegakan gerbang kendali mutu (*Quality Gate*) menggunakan **GitHub Actions**.
 
-- **Nama Mahasiswa**: Dhiopatty Alexander
+- **Nama Mahasiswa**: Dhio Patty Alexander
 - **NIM**: 0110225006
 - **Repository**: [devsecops-p5-0110225006](https://github.com/dhiopattyalexander/devsecops-p5-0110225006)
 
