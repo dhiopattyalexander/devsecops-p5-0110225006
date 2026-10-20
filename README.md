@@ -1,69 +1,82 @@
-# DevSecOps Pipeline P5: Secure Task Management API
+# DevSecOps Pipeline P5: Multi-Tool SAST Integration
 
 ![DevSecOps Pipeline](https://github.com/dhiopattyalexander/devsecops-p5-0110225006/actions/workflows/devsecops.yml/badge.svg)
-![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)
-![Security Tool](https://img.shields.io/badge/SAST-Bandit-red.svg)
+![CodeQL Analysis](https://github.com/dhiopattyalexander/devsecops-p5-0110225006/actions/workflows/codeql.yml/badge.svg)
 ![Quality Gate](https://img.shields.io/badge/Quality%20Gate-Enforced-success.svg)
+![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)
 
-Proyek ini dibangun untuk memenuhi penugasan praktikum **DevSecOps Praktik 5** dengan fokus pada integrasi berkesinambungan (*Continuous Integration*), analisis keamanan statis (*Static Application Security Testing* / SAST), dan penegakan gerbang kendali mutu (*Quality Gate*) menggunakan **GitHub Actions**.
+Proyek ini dibangun untuk memenuhi penugasan praktikum **DevSecOps Praktik 5: Integrasi SAST dalam CI/CD Pipeline dengan GitHub Actions** (S1 Teknik Informatika STT Terpadu Nurul Fikri).
 
-- **Nama Mahasiswa**: Dhio Patty Alexander
+- **Nama Mahasiswa**: Dhiopatty Alexander
 - **NIM**: 0110225006
 - **Repository**: [devsecops-p5-0110225006](https://github.com/dhiopattyalexander/devsecops-p5-0110225006)
 
 ---
 
-## 1. Nama Aplikasi & Fungsinya
+## 1. Pemenuhan Tugas Mandiri (Slide PPT Halaman 25)
 
-### Nama Aplikasi:
-**Secure Task & Audit Management REST API**
-
-### Fungsi Aplikasi:
-Aplikasi ini merupakan layanan backend RESTful API yang berfungsi untuk mengelola siklus penugasan tugas (*task management*) dan kredensial pengguna secara aman dengan prinsip *secure coding*. Fitur utamanya mencakup:
-1. **User Authentication & Credential Management**: Pendaftaran dan otentikasi pengguna menggunakan enkripsi hashing PBKDF2-HMAC-SHA256 dengan *cryptographic salt* untuk menangkal serangan *dictionary* dan *rainbow table*.
-2. **Task Lifecycle Management**: Operasi CRUD (Create, Read, Update status, Delete) untuk penugasan kerja tim dengan prioritas dinamis (*Low*, *Medium*, *High*, *Critical*).
-3. **Input Sanitization & Injection Defense**: Sanitasi otomatis pada setiap string input pengguna guna memitigasi risiko Cross-Site Scripting (XSS) dan injeksi karakter berbahaya.
-4. **Directory Traversal Protection**: Validasi nama file dan parameter input untuk mencegah serangan *Path Traversal* (CWE-22).
-5. **System Health & Observability**: Endpoint pemantauan kesehatan layanan (`/health`) dan structured audit logging.
+| Butir Tugas | Target | Status & Bukti Implementasi |
+|---|---|---|
+| **Tugas 1 (Wajib)** | Integrasikan **SonarQube / SonarCloud** ke project via GitHub Actions. Tampilkan dashboard & Quality Gate. | Terintegrasi via `sonar-project.properties`, job `sonarqube-scan` pada GitHub Actions (`SonarSource/sonarqube-scan-action`). |
+| **Tugas 2 (Wajib)** | Tambahkan **CodeQL** ke repository yang sama & buat analisis perbandingan temuan CodeQL vs SonarQube (1 paragraf). | Terintegrasi via `.github/workflows/codeql.yml` dengan engine native GitHub Security Analysis untuk Python. |
+| **Tugas 3 (Bonus)** | Buat **Custom Semgrep Rule** spesifik framework yang digunakan (Flask) dan integrasikan ke pipeline. | Dibuat di `.semgrep/custom-rules.yml` mendeteksi debug mode (`CWE-489`), hardcoded secret key (`CWE-798`), dan path traversal (`CWE-22`). |
+| **Laporan** | Dokumen analisis format PDF/Word memuat link repo, screenshot pipeline, screenshot dashboard, dan analisis temuan. | Disusun pada dokumen `Laporan_DevSecOps_P5_0110225006.docx`. |
 
 ---
 
-## 2. Bahasa & Framework yang Digunakan
+## 2. Arsitektur Multi-Tool SAST Pipeline
 
-Aplikasi dan pipeline ini dibangun dengan teknologi sebagai berikut:
+```mermaid
+graph TD
+    A[Push / PR ke 'main'] --> B[Job: Build, Test & Coverage]
+    B --> B1[Install Dependencies]
+    B1 --> B2[pytest-cov: Generate coverage.xml]
+    
+    B2 --> C[Tugas 1: SonarQube / SonarCloud Scan]
+    B2 --> D[Tugas 2: CodeQL Security Analysis]
+    B2 --> E[Tugas 3: Semgrep Custom Flask Rules]
+    B2 --> F[Python Bandit SAST Scanner]
 
-- **Bahasa Pemrograman**: [Python](https://www.python.org/) (versi 3.10 / 3.11 / 3.12 / 3.14)
-- **Web Framework**: [Flask 3.0+](https://flask.palletsprojects.com/) & [Werkzeug](https://palletsprojects.com/p/werkzeug/) (Microframework modular dan terukur)
-- **Unit Testing Framework**: [pytest](https://docs.pytest.org/) untuk pengujian otomatis logika bisnis, keamanan, dan rute REST
-- **SAST Tool (Static Application Security Testing)**: [Bandit](https://github.com/PyCQA/bandit) untuk memindai kerentanan kode Python berdasarkan basis data kelemahan umum (CWE / OWASP Top 10)
-- **CI/CD Platform**: [GitHub Actions](https://github.com/features/actions) berbasis runner `ubuntu-latest`
-
-### Struktur File Source Code (Minimal 5 File Bermakna)
-Repository ini memiliki arsitektur modular yang terdiri dari 5 modul inti yang saling terintegrasi:
-
-```text
-src/
-├── app.py          # 1. Controller & HTTP REST API routing (Health, Auth, Tasks)
-├── models.py       # 2. Data Entity & validasi skema (User, Task, Priority, Status)
-├── services.py     # 3. Logika bisnis (CRUD TaskService & UserService)
-├── security.py     # 4. Modul keamanan (PBKDF2-SHA256, XSS sanitization, Token generation)
-└── utils.py        # 5. Helper utilitas (Structured Logging, Standard JSON response)
+    C --> C1[Dashboard SonarCloud & Quality Gate Check]
+    D --> D1[GitHub Code Scanning Alerts SARIF]
+    E --> E1[Upload SARIF to GitHub Security Tab]
+    F --> F1[Python Quality Gate Script: 0 High / 0 Med]
 ```
 
-Selain itu, terdapat file pengujian dan penegakan Quality Gate:
-- `tests/test_services.py`: Pengujian unit pada logika layanan tugas dan pengguna.
-- `tests/test_security.py`: Pengujian unit pada sanitasi input, validasi keamanan, dan hashing.
-- `tests/test_app.py`: Pengujian end-to-end endpoint API Flask menggunakan fixture client.
-- `scripts/quality_gate.py`: Skrip evaluasi laporan SAST yang menerapkan ambang batas lolos/gagal.
+---
+
+## 3. Struktur Repository & 5 File Source Code Utama
+
+```text
+devsecops-p5-0110225006/
+├── .github/
+│   └── workflows/
+│       ├── devsecops.yml        # Pipeline multi-job (Build, SonarQube, Semgrep, Bandit)
+│       └── codeql.yml           # Pipeline native GitHub CodeQL SAST
+├── .semgrep/
+│   └── custom-rules.yml         # Custom ruleset Semgrep khusus Framework Flask
+├── src/
+│   ├── __init__.py
+│   ├── app.py                   # 1. Controller & HTTP REST Routing Flask
+│   ├── models.py                # 2. Skema Data Entity (User, Task, Status, Priority)
+│   ├── services.py              # 3. Logika Bisnis (CRUD TaskService, UserService)
+│   ├── security.py              # 4. Modul Keamanan (PBKDF2-SHA256, XSS, Path Traversal)
+│   └── utils.py                 # 5. Structured Audit Logging & Response Formatter
+├── tests/
+│   ├── __init__.py
+│   ├── test_app.py              # Unit test endpoint REST
+│   ├── test_security.py         # Unit test fungsi kriptografi & sanitasi
+│   └── test_services.py         # Unit test alur bisnis & manajemen pengguna
+├── scripts/
+│   └── quality_gate.py          # Script evaluator Quality Gate
+├── sonar-project.properties     # Konfigurasi SonarQube / SonarCloud Scanner
+├── requirements.txt             # Dependensi Python
+└── README.md
+```
 
 ---
 
-## 3. Cara Menjalankan Aplikasi
-
-### A. Persyaratan Awal (Prerequisites)
-Pastikan Python 3.10 atau versi yang lebih baru sudah terpasang di sistem operasi Anda.
-
-### B. Langkah Instalasi & Menjalankan Lokal
+## 4. Cara Menjalankan Secara Lokal
 
 1. **Clone Repository**:
    ```bash
@@ -71,101 +84,35 @@ Pastikan Python 3.10 atau versi yang lebih baru sudah terpasang di sistem operas
    cd devsecops-p5-0110225006
    ```
 
-2. **Buat dan Aktifkan Virtual Environment** (Opsional tapi disarankan):
-   ```bash
-   # Di Windows (PowerShell):
-   python -m venv venv
-   .\venv\Scripts\Activate.ps1
-
-   # Di Linux / macOS:
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. **Install Dependencies**:
+2. **Install Dependensi**:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Menjalankan Unit Test**:
+3. **Jalankan Unit Test & Coverage**:
    ```bash
-   pytest -v tests/
+   pytest -v --cov=src --cov-report=xml:coverage.xml tests/
    ```
 
-5. **Menjalankan SAST Scanner (Bandit) secara Lokal**:
+4. **Jalankan Semgrep dengan Custom Rules Flask**:
    ```bash
-   bandit -r src/ -f txt
+   semgrep scan --config=.semgrep/custom-rules.yml
    ```
 
-6. **Menjalankan Server Aplikasi**:
+5. **Jalankan Aplikasi Server**:
    ```bash
    python -m src.app
    ```
-   Aplikasi akan berjalan pada `http://127.0.0.1:5000`.
-
-### C. Daftar Endpoint API Utama
-
-| Method | Endpoint | Deskripsi |
-|---|---|---|
-| `GET` | `/health` | Memeriksa status kesehatan layanan backend |
-| `POST` | `/api/v1/auth/register` | Mendaftarkan akun pengguna baru |
-| `POST` | `/api/v1/auth/login` | Otentikasi dan login pengguna |
-| `GET` | `/api/v1/tasks` | Mengambil seluruh daftar tugas (bisa difilter via `?status=pending`) |
-| `POST` | `/api/v1/tasks` | Membuat tugas baru |
-| `GET` | `/api/v1/tasks/<task_id>` | Mengambil detail tugas berdasarkan ID |
-| `PUT` | `/api/v1/tasks/<task_id>/status` | Memperbarui status pengerjaan tugas |
-| `DELETE` | `/api/v1/tasks/<task_id>` | Menghapus tugas berdasarkan ID |
 
 ---
 
-## 4. Overview Pipeline CI/CD & DevSecOps yang Diimplementasikan
+## 5. Panduan Menghubungkan ke SonarCloud (Tugas 1)
 
-Pipeline DevSecOps diatur di dalam file [`.github/workflows/devsecops.yml`](.github/workflows/devsecops.yml) dan dieksekusi secara otomatis oleh GitHub Actions.
-
-### A. Mekanisme Pemicu (Trigger Events)
-Pipeline akan otomatis berjalan ketika:
-- Terdapat event **`push`** ke branch **`main`**.
-- Terdapat event **`pull_request`** yang diajukan ke branch **`main`**.
-
-### B. Arsitektur Dua Job Terpisah (Two-Stage Pipeline)
-
-```mermaid
-graph TD
-    A[Event: Push / Pull Request ke 'main'] --> B[Job 1: build]
-    subgraph Job 1: Build & Unit Test
-        B --> B1[Checkout Source Code]
-        B1 --> B2[Setup Python 3.11]
-        B2 --> B3[Install Dependencies - pip install]
-        B3 --> B4[Execute Unit Tests - pytest]
-    end
-    B4 -->|needs: build| C[Job 2: sast-scan]
-    subgraph Job 2: SAST Scan & Quality Gate
-        C --> C1[Checkout Source Code]
-        C1 --> C2[Setup Python 3.11]
-        C2 --> C3[Install Bandit Scanner]
-        C3 --> C4[Run Bandit Scan & Export Report]
-        C4 --> C5[Enforce Quality Gate Policy]
-        C5 --> C6[Upload Security Report Artifact]
-    end
-    C6 --> D{Status Akhir Pipeline}
-    D -->|Semua Threshold Lolos| E[SUCCESS - Centang Hijau]
-    D -->|Ada Pelanggaran Keamanan| F[FAILED - Build Diblokir]
-```
-
-### C. Rincian Konfigurasi Job:
-
-1. **Job 1: `build`** (Runner: `ubuntu-latest`)
-   - Melakukan checkout repositori.
-   - Mengonfigurasi lingkungan runtime Python 3.11 dengan caching dependencies.
-   - Menginstal modul pada `requirements.txt`.
-   - Menjalankan unit tests dengan `pytest -v tests/` untuk menjamin integritas fungsional kode sebelum memasuki tahap analisis keamanan.
-
-2. **Job 2: `sast-scan`** (Runner: `ubuntu-latest`, Ketergantungan: `needs: build`)
-   - **Dependency Enforcement**: Menggunakan direktif `needs: build`. Job ini tidak akan pernah dieksekusi apabila Job `build` gagal.
-   - **Pemindaian Keamanan Statis (SAST)**: Menjalankan engine **Bandit** pada seluruh file di dalam direktori `src/` dan menghasilkan output dalam format JSON serta TXT.
-   - **Penerapan Quality Gate (`scripts/quality_gate.py`)**:
-     - *High Severity Tolerance*: **0** (Ditolak / Fail jika ada temuan risiko tinggi).
-     - *Medium Severity Tolerance*: **0** (Ditolak / Fail jika ada temuan risiko menengah).
-     - *Low Severity Tolerance*: **Maksimal 5** (Diberikan peringatan / warning).
-     - Jika evaluasi Quality Gate gagal, step akan menghasilkan *exit code 1*, membatalkan pipeline, dan menandai build sebagai gagal.
-   - **Upload Artifact**: Laporan hasil pemindaian keamanan diunggah sebagai artifak build (`sast-bandit-security-report`) yang dapat diunduh langsung dari GitHub Actions.
+1. Buka [https://sonarcloud.io](https://sonarcloud.io) lalu klik **Log in with GitHub**.
+2. Klik tombol **"+"** di kanan atas -> pilih **Analyze new project**.
+3. Pilih repository `devsecops-p5-0110225006`.
+4. Buka **My Account** (ikon profil) -> **Security** -> Generate Token dengan nama `github-actions`.
+5. Buka repository GitHub: **Settings** -> **Secrets and variables** -> **Actions** -> **New repository secret**:
+   - Name: `SONAR_TOKEN`
+   - Secret: *[Paste token dari SonarCloud]*
+6. Jalankan ulang workflow pada tab **Actions** di GitHub. Pipeline akan langsung terhubung ke dashboard SonarCloud!

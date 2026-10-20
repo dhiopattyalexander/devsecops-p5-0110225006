@@ -1,0 +1,56 @@
+rules:
+  - id: flask-debug-mode-enabled
+    languages:
+      - python
+    severity: ERROR
+    message: >-
+      Terdeteksi konfigurasi Flask dengan debug mode aktif (debug=True).
+      Menjalankan aplikasi Flask dengan debug=True di lingkungan produksi
+      sangat berbahaya karena membuka Werkzeug interactive debugger console
+      yang dapat dieksploitasi untuk Remote Code Execution (RCE) (CWE-489).
+    metadata:
+      cwe: "CWE-489: Active Debug Code"
+      owasp: "A05:2021 - Security Misconfiguration"
+      category: security
+      confidence: HIGH
+    patterns:
+      - pattern-either:
+          - pattern: $APP.run(..., debug=True, ...)
+          - pattern: $APP.config['DEBUG'] = True
+          - pattern: $APP.config["DEBUG"] = True
+
+  - id: flask-hardcoded-secret-key
+    languages:
+      - python
+    severity: WARNING
+    message: >-
+      Terdeteksi hardcoded secret key pada aplikasi Flask. Kunci rahasia
+      tidak boleh ditulis langsung di kode sumber karena dapat memungkinkan penyerang
+      memalsukan session cookies yang ditandatangani secara kriptografis (CWE-798).
+      Gunakan environment variables seperti os.getenv('SECRET_KEY').
+    metadata:
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+      owasp: "A07:2021 - Identification and Authentication Failures"
+      category: security
+      confidence: MEDIUM
+    patterns:
+      - pattern-either:
+          - pattern: $APP.secret_key = "..."
+          - pattern: $APP.config['SECRET_KEY'] = "..."
+          - pattern: $APP.config["SECRET_KEY"] = "..."
+
+  - id: flask-path-traversal-unsanitized
+    languages:
+      - python
+    severity: ERROR
+    message: >-
+      Penggunaan fungsi pemanggilan berkas langsung tanpa sanitasi nama berkas dapat
+      memicu celah Path Traversal (CWE-22). Selalu validasi nama berkas menggunakan
+      werkzeug.utils.secure_filename() atau fungsi sanitasi kustom.
+    metadata:
+      cwe: "CWE-22: Improper Limitation of a Pathname to a Restricted Directory"
+      owasp: "A01:2021 - Broken Access Control"
+      category: security
+      confidence: MEDIUM
+    patterns:
+      - pattern: open(..., request.args.get(...), ...)

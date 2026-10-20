@@ -1,4 +1,4 @@
-name: DevSecOps Pipeline
+name: DevSecOps Multi-Tool SAST Pipeline
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    name: Build & Unit Test
+    name: Build, Unit Test & Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
@@ -27,12 +27,80 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Execute Unit Tests
+      - name: Execute Unit Tests with Coverage
         run: |
-          pytest -v tests/
+          pytest -v --cov=src --cov-report=xml:coverage.xml tests/
 
-  sast-scan:
-    name: SAST Security Scan & Quality Gate
+      - name: Upload Test Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  sonarqube-scan:
+    name: "Tugas 1: SonarQube / SonarCloud SAST Analysis"
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Test Coverage Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+
+      - name: SonarQube / SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        continue-on-error: true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
+
+      - name: SonarQube Quality Gate Check
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        continue-on-error: true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
+
+  semgrep-scan:
+    name: "Tugas 3: Custom Semgrep Rules for Flask"
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep with Custom Flask Rules
+        run: |
+          python -m pip install --upgrade pip
+          pip install semgrep
+          mkdir -p reports
+          echo "=== RUNNING SEMGREP SCAN WITH CUSTOM RULES ==="
+          semgrep scan --config=.semgrep/custom-rules.yml --config=auto --sarif --output=reports/semgrep-results.sarif || true
+          semgrep scan --config=.semgrep/custom-rules.yml --config=auto --text || true
+
+      - name: Upload Semgrep SARIF to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: reports/semgrep-results.sarif
+
+      - name: Upload Semgrep Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-security-report
+          path: reports/
+
+  bandit-scan:
+    name: Python Bandit SAST & Quality Gate
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -45,7 +113,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Dependencies & SAST Tools
+      - name: Install Dependencies & Bandit
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
@@ -53,19 +121,10 @@ jobs:
       - name: Run Bandit SAST Scanner
         run: |
           mkdir -p reports
-          # Run Bandit scan on source directory, output JSON and TXT format
           bandit -r src/ -f json -o reports/bandit-report.json || true
           bandit -r src/ -f txt -o reports/bandit-report.txt || true
-          echo "=== BANDIT SCAN SUMMARY OUTPUT ==="
           cat reports/bandit-report.txt
 
       - name: Enforce DevSecOps Quality Gate
         run: |
           python scripts/quality_gate.py reports/bandit-report.json
-
-      - name: Upload Security Reports Artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: sast-bandit-security-report
-          path: reports/
