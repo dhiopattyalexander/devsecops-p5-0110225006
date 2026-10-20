@@ -7,7 +7,7 @@
 
 Proyek ini dibangun untuk memenuhi penugasan praktikum **DevSecOps Praktik 5: Integrasi SAST dalam CI/CD Pipeline dengan GitHub Actions** (S1 Teknik Informatika STT Terpadu Nurul Fikri).
 
-- **Nama Mahasiswa**: Dhiopatty Alexander
+- **Nama Mahasiswa**: Dhio Patty Alexander
 - **NIM**: 0110225006
 - **Repository**: [devsecops-p5-0110225006](https://github.com/dhiopattyalexander/devsecops-p5-0110225006)
 

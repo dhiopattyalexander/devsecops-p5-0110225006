@@ -1,6 +1,6 @@
 """
 DevSecOps Quality Gate Evaluator for Bandit SAST Reports.
-Author: Dhiopatty Alexander (0110225006)
+Author: Dhio Patty Alexander (0110225006)
 
 This script parses Bandit JSON output and enforces organizational security thresholds.
 Policy:

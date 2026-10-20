@@ -1,6 +1,6 @@
 """
 Flask Application Entrypoint for Secure Task Management API.
-Author: Dhiopatty Alexander (0110225006)
+Author: Dhio Patty Alexander (0110225006)
 """
 
 import os
