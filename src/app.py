@@ -49,7 +49,8 @@ def create_app() -> Flask:
             res, code = format_response(True, data=user.to_dict(), message="User registered successfully.", status_code=201)
             return jsonify(res), code
         except ValueError as err:
-            res, code = format_response(False, message=str(err), status_code=400)
+            logger.warning(f"Registration validation error: {err}")
+            res, code = format_response(False, message="Invalid registration data provided.", status_code=400)
             return jsonify(res), code
 
     @app.route("/api/v1/auth/login", methods=["POST"])
@@ -96,7 +97,8 @@ def create_app() -> Flask:
             res, code = format_response(True, data=task.to_dict(), message="Task created successfully.", status_code=201)
             return jsonify(res), code
         except (ValueError, KeyError) as err:
-            res, code = format_response(False, message=str(err), status_code=400)
+            logger.warning(f"Task creation validation error: {err}")
+            res, code = format_response(False, message="Invalid task data provided.", status_code=400)
             return jsonify(res), code
 
     @app.route("/api/v1/tasks/<task_id>", methods=["GET"])
@@ -127,7 +129,8 @@ def create_app() -> Flask:
             res, code = format_response(False, message="Task not found.", status_code=404)
             return jsonify(res), code
         except ValueError as err:
-            res, code = format_response(False, message=str(err), status_code=400)
+            logger.warning(f"Task status update error: {err}")
+            res, code = format_response(False, message="Invalid task status value provided.", status_code=400)
             return jsonify(res), code
 
     @app.route("/api/v1/tasks/<task_id>", methods=["DELETE"])
